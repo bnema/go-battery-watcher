@@ -25,29 +25,18 @@ func StartCLI(db *sql.DB) {
 	lineGraph.Title = "Battery Usage"
 	lineGraph.Data = make([][]float64, 1)
 
-	// Create a new table widget
-	table := make([]*widgets.Paragraph, 10)
-	for i := range table {
-		table[i] = widgets.NewParagraph()
-		table[i].Border = false
-	}
+	// Create a new list widget
+	l := widgets.NewList()
+	l.Title = "Top Devices"
+	l.Rows = make([]string, 10)
+	l.TextStyle = ui.NewStyle(ui.ColorYellow)
+	l.WrapText = false
 
-	// Define a draw function that renders the line graph
 	draw := func() {
 		w, h := ui.TerminalDimensions()
-		if h >= 15 { // Check if there is enough space to display at least 5 paragraphs and the line graph
-			lineGraph.SetRect(0, 0, w, h/4)
-			ui.Render(lineGraph)
-			for i := range table {
-				table[i].SetRect(0, h/4+i*3, w, h/4+(i+1)*3)
-				ui.Render(table[i])
-			}
-		} else { // Only display the paragraphs
-			for i := range table {
-				table[i].SetRect(0, h/2+i*3, w, h/2+(i+1)*3)
-				ui.Render(table[i])
-			}
-		}
+		lineGraph.SetRect(0, 0, w, h/2)
+		l.SetRect(0, h/2, w, h)
+		ui.Render(lineGraph, l)
 	}
 
 	// Initialize termbox
@@ -93,9 +82,9 @@ func StartCLI(db *sql.DB) {
 				log.Fatal(err)
 			}
 
-			// Prepare data for the table
+			// Prepare data for the list
 			for i, device := range topDevices {
-				table[i].Text = fmt.Sprintf("%s: %.2fW", device.DeviceName, device.PowerUsage)
+				l.Rows[i] = fmt.Sprintf("%s: %.2fW", device.DeviceName, device.PowerUsage)
 			}
 
 			// Calculate the total power usage from the battery data
