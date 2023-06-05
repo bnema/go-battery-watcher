@@ -24,18 +24,30 @@ func StartCLI(db *sql.DB) {
 	lineGraph := widgets.NewPlot()
 	lineGraph.Title = "Battery Usage"
 	lineGraph.Data = make([][]float64, 1)
-	// Create a new table widget
-	table := widgets.NewTable()
-	table.Title = "Top 10 Devices by Consumption"
-	table.RowStyles[0] = ui.NewStyle(ui.ColorYellow)
 
-	// Define sizes for the widgets
-	lineGraph.SetRect(0, 0, 100, 15) // Set the size of the graph to 100x15
-	table.SetRect(0, 16, 100, 40)    // Set the size of the table
+	// Create a new table widget
+	table := make([]*widgets.Paragraph, 10)
+	for i := range table {
+		table[i] = widgets.NewParagraph()
+		table[i].Border = false
+	}
 
 	// Define a draw function that renders the line graph
 	draw := func() {
-		ui.Render(lineGraph, table)
+		w, h := ui.TerminalDimensions()
+		if h >= 15 { // Check if there is enough space to display at least 5 paragraphs and the line graph
+			lineGraph.SetRect(0, 0, w, h/4)
+			ui.Render(lineGraph)
+			for i := range table {
+				table[i].SetRect(0, h/4+i*3, w, h/4+(i+1)*3)
+				ui.Render(table[i])
+			}
+		} else { // Only display the paragraphs
+			for i := range table {
+				table[i].SetRect(0, h/2+i*3, w, h/2+(i+1)*3)
+				ui.Render(table[i])
+			}
+		}
 	}
 
 	// Initialize termbox
@@ -64,6 +76,11 @@ func StartCLI(db *sql.DB) {
 			if ev.Type == tb.EventKey && ev.Key == tb.KeyCtrlC {
 				return
 			}
+		case e := <-ui.PollEvents():
+			if e.Type == ui.ResizeEvent {
+				draw()
+			}
+
 		case <-ticker:
 			// Read battery data from the database
 			data, err := handlers.ReadDataLive(db)
@@ -77,16 +94,9 @@ func StartCLI(db *sql.DB) {
 			}
 
 			// Prepare data for the table
-			rows := make([][]string, len(topDevices)+1)
-			// Header row
-			rows[0] = []string{"Device Name", "Total Consumption"}
-
-			// Data rows
 			for i, device := range topDevices {
-				rows[i+1] = []string{device.DeviceName, fmt.Sprintf("%.2f", device.PowerUsage)}
+				table[i].Text = fmt.Sprintf("%s: %.2fW", device.DeviceName, device.PowerUsage)
 			}
-
-			table.Rows = rows
 
 			// Calculate the total power usage from the battery data
 			var totalPower float64
