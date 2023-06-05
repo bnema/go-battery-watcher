@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"time"
 
 	"github.com/bnema/gobatterywatcher/cli"
@@ -22,13 +21,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	data, err := handlers.ReadDataLive(database)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("ReadDataLive returned %d records\n", len(data))
-
 	// Start a goroutine to continuously refresh the power data
 	go func() {
 		for {

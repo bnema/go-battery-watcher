@@ -2,6 +2,7 @@ package cli
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 
@@ -23,11 +24,18 @@ func StartCLI(db *sql.DB) {
 	lineGraph := widgets.NewPlot()
 	lineGraph.Title = "Battery Usage"
 	lineGraph.Data = make([][]float64, 1)
-	lineGraph.SetRect(0, 0, 100, 25) // Set the size of the graph to 100x25
+	// Create a new table widget
+	table := widgets.NewTable()
+	table.Title = "Top 10 Devices by Consumption"
+	table.RowStyles[0] = ui.NewStyle(ui.ColorYellow)
+
+	// Define sizes for the widgets
+	lineGraph.SetRect(0, 0, 100, 15) // Set the size of the graph to 100x15
+	table.SetRect(0, 16, 100, 40)    // Set the size of the table
 
 	// Define a draw function that renders the line graph
 	draw := func() {
-		ui.Render(lineGraph)
+		ui.Render(lineGraph, table)
 	}
 
 	// Initialize termbox
@@ -46,7 +54,7 @@ func StartCLI(db *sql.DB) {
 	}()
 
 	// Create a ticker that ticks every 5 seconds
-	ticker := time.NewTicker(5 * time.Second).C
+	ticker := time.NewTicker(3 * time.Second).C
 
 	// Main loop
 	for {
@@ -62,6 +70,23 @@ func StartCLI(db *sql.DB) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			// Get top 10 devices by power consumption
+			topDevices, err := handlers.GetTopDevices(db)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// Prepare data for the table
+			rows := make([][]string, len(topDevices)+1)
+			// Header row
+			rows[0] = []string{"Device Name", "Total Consumption"}
+
+			// Data rows
+			for i, device := range topDevices {
+				rows[i+1] = []string{device.DeviceName, fmt.Sprintf("%.2f", device.PowerUsage)}
+			}
+
+			table.Rows = rows
 
 			// Calculate the total power usage from the battery data
 			var totalPower float64
@@ -77,7 +102,7 @@ func StartCLI(db *sql.DB) {
 				lineGraph.Data[0] = lineGraph.Data[0][1:]
 			}
 
-			// Render the line graph
+			// Render the widgets
 			draw()
 		}
 	}

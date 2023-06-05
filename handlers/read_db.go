@@ -64,3 +64,33 @@ func ReadDataHistory(db *sql.DB) ([]types.Data, error) {
 
 	return data, nil
 }
+
+// GetTopDevices gets the top 10 devices by power consumption from the power_usage table.
+func GetTopDevices(db *sql.DB) ([]types.Data, error) {
+	rows, err := db.Query(`
+		SELECT device_name, power_usage
+		FROM power_usage
+		ORDER BY power_usage DESC
+		LIMIT 10
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var devices []types.Data
+	for rows.Next() {
+		var device types.Data
+		err := rows.Scan(&device.DeviceName, &device.PowerUsage)
+		if err != nil {
+			return nil, err
+		}
+		devices = append(devices, device)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return devices, nil
+}
