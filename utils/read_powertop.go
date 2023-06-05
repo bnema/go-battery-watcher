@@ -83,3 +83,23 @@ func ReadPowerTop() ([]types.Data, error) {
 
 	return data, nil
 }
+
+// Normalize power data
+func NormalizeData(data []types.Data, totalPower float64) []types.Data {
+	// Calculate the sum of all power usages
+	var sumPower float64
+	for _, d := range data {
+		sumPower += d.PowerUsage
+	}
+
+	// Create a new slice of data
+	normalizedData := make([]types.Data, len(data))
+
+	// Normalize each power usage
+	for i, d := range data {
+		normalizedData[i] = d
+		normalizedData[i].PowerUsage = d.PowerUsage / sumPower * totalPower
+	}
+
+	return normalizedData
+}
