@@ -35,7 +35,7 @@ func TestReadPowerTop(t *testing.T) {
 
 	// Check if there are any entries with 0.0% power usage
 	for _, d := range data {
-		if d.PowerUsage == "0" || d.PowerUsage == "0 mW" {
+		if d.PowerUsage == 0 {
 			t.Errorf("unexpected entry with 0.0%% power usage: %v", d)
 		}
 	}

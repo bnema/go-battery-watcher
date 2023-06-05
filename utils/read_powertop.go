@@ -72,7 +72,7 @@ func ReadPowerTop() ([]types.Data, error) {
 			data = append(data, types.Data{
 				DeviceType: deviceType,
 				DeviceName: deviceName,
-				PowerUsage: powerUsage,
+				PowerUsage: ConvertToWatts(powerUsage),
 			})
 		}
 	}
