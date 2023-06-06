@@ -6,10 +6,15 @@ import (
 	"github.com/bnema/gobatterywatcher/cli"
 	"github.com/bnema/gobatterywatcher/db"
 	"github.com/bnema/gobatterywatcher/handlers"
+	"github.com/bnema/gobatterywatcher/types"
 	"github.com/bnema/gobatterywatcher/utils"
+	"github.com/distatus/battery"
 )
 
+var Battery types.BatteryInfo
+
 func main() {
+
 	// Create db and tables
 	database, err := db.CreateDB()
 	if err != nil {
@@ -21,6 +26,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	// Start a goroutine to continuously refresh the power data
 	go func() {
 		for {
@@ -39,9 +45,20 @@ func main() {
 				panic(err)
 			}
 
+			// Fetch battery discharge/charge info (value in mW)
+			batteryStats, err := battery.GetAll()
+			if err != nil {
+				panic(err)
+			}
+			for _, battery := range batteryStats {
+
+				// store the charge rate in the Battery struct
+				Battery.Rate = battery.ChargeRate
+
+			}
+
 			// Sleep for 5 seconds
 			time.Sleep(5 * time.Second)
-
 		}
 	}()
 

@@ -11,7 +11,10 @@ import (
 	tb "github.com/nsf/termbox-go"
 
 	"github.com/bnema/gobatterywatcher/handlers"
+	"github.com/bnema/gobatterywatcher/types"
 )
+
+var Battery types.BatteryInfo
 
 func StartCLI(db *sql.DB) {
 	// Initialize termui
@@ -69,13 +72,13 @@ func StartCLI(db *sql.DB) {
 			if e.Type == ui.ResizeEvent {
 				draw()
 			}
-
 		case <-ticker:
 			// Read battery data from the database
 			data, err := handlers.ReadDataLive(db)
 			if err != nil {
 				log.Fatal(err)
 			}
+
 			// Get top 10 devices by power consumption
 			topDevices, err := handlers.GetTopDevices(db)
 			if err != nil {
@@ -100,6 +103,12 @@ func StartCLI(db *sql.DB) {
 			if len(lineGraph.Data[0]) > 100 {
 				lineGraph.Data[0] = lineGraph.Data[0][1:]
 			}
+
+			// Fetch the discharge rate and update the line graph title
+			dischargeRate := Battery.Rate
+			fmt.Println(dischargeRate)
+			batteryRateInWatts := dischargeRate / 1000
+			lineGraph.Title = fmt.Sprintf("Battery Discharge Rate: %.2fW", batteryRateInWatts)
 
 			// Render the widgets
 			draw()
