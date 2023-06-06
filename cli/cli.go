@@ -16,7 +16,7 @@ import (
 
 var Battery types.BatteryInfo
 
-func StartCLI(db *sql.DB) {
+func StartCLI(db *sql.DB, Battery *types.BatteryInfo) {
 	// Initialize termui
 	if err := ui.Init(); err != nil {
 		log.Fatalf("Failed to initialize termui: %v", err)

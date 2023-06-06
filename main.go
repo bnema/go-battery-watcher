@@ -63,7 +63,7 @@ func main() {
 	}()
 
 	// Start the CLI
-	go cli.StartCLI(database)
+	go cli.StartCLI(database, &Battery)
 
 	// Keep the main function running forever
 	select {}
